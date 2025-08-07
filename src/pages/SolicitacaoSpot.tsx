@@ -9,8 +9,6 @@ import Navbar from '@/components/Navbar';
 import campaign1 from '@/assets/campaign-1.jpg';
 import campaign2 from '@/assets/campaign-2.jpg';
 import campaign3 from '@/assets/campaign-3.jpg';
-import { useSolicitacaoSpot } from '@/hooks/useSolicitacaoSpot';
-import { useCampaigns } from '@/hooks/useCampaigns';
 
 interface SolicitacaoSpotInterface {
   id: string;
@@ -22,13 +20,12 @@ interface SolicitacaoSpotInterface {
 
 const SolicitacaoSpot = () => {
   const { campanhaId } = useParams();
-  const { campaigns } = useCampaigns();
-  const { solicitacoesSpot, loading, createSolicitacaoSpot } = useSolicitacaoSpot(campanhaId);
+  const [solicitacoes, setSolicitacoes] = useState<SolicitacaoSpotInterface[]>([]);
   const [textoSpot, setTextoSpot] = useState('');
   const [tempoCalculado, setTempoCalculado] = useState(0);
 
   // Dados das campanhas para buscar a capa correta
-  const campaigns = {
+  const mockCampaigns = {
     1: { title: 'Campanha de Lançamento de Produto', coverImage: campaign1 },
     2: { title: 'Email Marketing - Black Friday', coverImage: campaign2 },
     3: { title: 'Redes Sociais - Engajamento', coverImage: campaign3 },
@@ -37,7 +34,7 @@ const SolicitacaoSpot = () => {
     6: { title: 'Webinar Educativo', coverImage: campaign3 },
   };
 
-  const currentCampaign = campaigns[parseInt(campanhaId || '1') as keyof typeof campaigns] || campaigns[1];
+  const currentCampaign = mockCampaigns[parseInt(campanhaId || '1') as keyof typeof mockCampaigns] || mockCampaigns[1];
 
   // Função para calcular tempo do spot (aproximadamente 150 palavras por minuto)
   const calcularTempo = (texto: string) => {
