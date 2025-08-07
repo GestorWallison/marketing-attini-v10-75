@@ -1,0 +1,114 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Dark mode como padrão - Preto com fontes brancas e detalhes amarelos */
+    --background: 0 0% 5%;
+    --foreground: 0 0% 95%;
+
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 45 100% 55%;
+    --primary-foreground: 0 0% 5%;
+    --primary-glow: 45 100% 65%;
+
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 90%;
+
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 70%;
+
+    --accent: 45 100% 55%;
+    --accent-foreground: 0 0% 5%;
+
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 95%;
+
+    --border: 0 0% 15%;
+    --input: 0 0% 12%;
+    --ring: 45 100% 55%;
+
+    --radius: 0.75rem;
+
+    /* Marketing ATTINI Design System - Dark Theme */
+    --gradient-primary: linear-gradient(135deg, hsl(45 100% 55%), hsl(45 100% 65%));
+    --gradient-accent: linear-gradient(135deg, hsl(0 0% 8%), hsl(0 0% 15%));
+    --shadow-card: 0 4px 20px -4px hsl(0 0% 0% / 0.3);
+    --shadow-card-hover: 0 8px 30px -4px hsl(0 0% 0% / 0.4);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 45 100% 55%;
+    --sidebar-primary-foreground: 0 0% 5%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 45 100% 55%;
+  }
+
+  .light {
+    --background: 248 100% 99%;
+    --foreground: 224 15% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 224 15% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 15% 15%;
+
+    --primary: 60 100% 45%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 60 100% 65%;
+
+    --secondary: 248 100% 97%;
+    --secondary-foreground: 224 15% 25%;
+
+    --muted: 248 100% 97%;
+    --muted-foreground: 224 15% 55%;
+
+    --accent: 60 100% 95%;
+    --accent-foreground: 60 100% 30%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 248 50% 92%;
+    --input: 248 50% 92%;
+    --ring: 60 100% 45%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(45 100% 45%), hsl(45 100% 55%));
+    --gradient-accent: linear-gradient(135deg, hsl(45 100% 95%), hsl(248 100% 97%));
+    --shadow-card: 0 4px 20px -4px hsl(0 0% 0% / 0.1);
+    --shadow-card-hover: 0 8px 30px -4px hsl(0 0% 0% / 0.15);
+    
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 60 100% 45%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 60 100% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
