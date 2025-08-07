@@ -165,6 +165,7 @@ const PecasGraficas = () => {
   };
 
   const currentCampaign = campaigns.find(c => c.id === campanhaId) || campaignData[parseInt(campanhaId || '1') as keyof typeof campaignData] || campaignData[1];
+  const coverImage = 'cover_image' in currentCampaign ? (currentCampaign.cover_image || campaign1) : currentCampaign.coverImage;
 
   return (
     <div className="min-h-screen bg-background">
@@ -276,7 +277,7 @@ const PecasGraficas = () => {
         <div className="mb-8 bg-card rounded-lg shadow-card overflow-hidden">
           <div className="relative">
             <img 
-              src={currentCampaign.coverImage} 
+              src={coverImage} 
               alt={currentCampaign.title}
               className="w-full h-48 object-cover"
             />
