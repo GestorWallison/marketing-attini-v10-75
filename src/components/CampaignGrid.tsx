@@ -6,9 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2, Upload, X } from 'lucide-react';
 import { useCampaigns } from '@/hooks/useCampaigns';
 import { useUserRole } from '@/hooks/useUserRole';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import campaign1 from '@/assets/campaign-1.jpg';
 
 interface FormData {
@@ -18,15 +20,20 @@ interface FormData {
   showSolicitacaoSpot: boolean;
   showMaterialExplicativo: boolean;
   status: 'publicado' | 'rascunho';
+  coverImage?: string;
 }
 
 const CampaignGrid = () => {
   const { campaigns, loading, createCampaign, updateCampaign, deleteCampaign } = useCampaigns();
   const { isAdmin } = useUserRole();
+  const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   
   const [formData, setFormData] = useState<FormData>({
     nome: '',
@@ -46,6 +53,78 @@ const CampaignGrid = () => {
       showMaterialExplicativo: true,
       status: 'rascunho'
     });
+    setImageFile(null);
+    setImagePreview(null);
+  };
+
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: 'Erro',
+          description: 'Por favor, selecione apenas arquivos de imagem.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: 'Erro',
+          description: 'A imagem deve ter no máximo 5MB.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    const input = document.getElementById('cover-image') as HTMLInputElement;
+    if (input) input.value = '';
+  };
+
+  const uploadImage = async (file: File, campaignId: string): Promise<string | null> => {
+    try {
+      setUploadingImage(true);
+      
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${campaignId}-${Date.now()}.${fileExt}`;
+      
+      const { error } = await supabase.storage
+        .from('campaign-covers')
+        .upload(fileName, file);
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('campaign-covers')
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: 'Erro no upload',
+        description: 'Não foi possível fazer upload da imagem.',
+        variant: 'destructive',
+      });
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleEdit = (id: string) => {
@@ -80,22 +159,35 @@ const CampaignGrid = () => {
 
     setSubmitting(true);
     
-    const result = await createCampaign({
-      title: formData.nome,
-      description: formData.descricao,
-      cover_image: campaign1,
-      status: formData.status === 'publicado' ? 'active' : 'paused',
-      show_pecas_graficas: formData.showPecasGraficas,
-      show_solicitacao_spot: formData.showSolicitacaoSpot,
-      show_material_explicativo: formData.showMaterialExplicativo,
-    });
+    try {
+      // First create the campaign
+      const result = await createCampaign({
+        title: formData.nome,
+        description: formData.descricao,
+        cover_image: campaign1, // Default image initially
+        status: formData.status === 'publicado' ? 'active' : 'paused',
+        show_pecas_graficas: formData.showPecasGraficas,
+        show_solicitacao_spot: formData.showSolicitacaoSpot,
+        show_material_explicativo: formData.showMaterialExplicativo,
+      });
 
-    if (result) {
-      resetForm();
-      setIsDialogOpen(false);
+      if (result && imageFile) {
+        // Upload image and update campaign with the new image URL
+        const imageUrl = await uploadImage(imageFile, result.id);
+        if (imageUrl) {
+          await updateCampaign(result.id, { cover_image: imageUrl });
+        }
+      }
+
+      if (result) {
+        resetForm();
+        setIsDialogOpen(false);
+      }
+    } catch (error) {
+      console.error('Error creating campaign:', error);
+    } finally {
+      setSubmitting(false);
     }
-    
-    setSubmitting(false);
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
@@ -175,6 +267,47 @@ const CampaignGrid = () => {
                     className="min-h-[100px]"
                     required
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cover-image">Imagem de Capa</Label>
+                  <div className="space-y-3">
+                    {imagePreview ? (
+                      <div className="relative">
+                        <img 
+                          src={imagePreview} 
+                          alt="Preview" 
+                          className="w-full h-48 object-cover rounded-lg border border-border"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-2 right-2"
+                          onClick={removeImage}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                        <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Clique para fazer upload da imagem de capa
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          PNG, JPG até 5MB
+                        </p>
+                      </div>
+                    )}
+                    <Input
+                      id="cover-image"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="cursor-pointer"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-4">
