@@ -93,7 +93,9 @@ const CampaignGrid = () => {
     setImageFile(null);
     setImagePreview(null);
     const input = document.getElementById('cover-image') as HTMLInputElement;
+    const editInput = document.getElementById('edit-cover-image') as HTMLInputElement;
     if (input) input.value = '';
+    if (editInput) editInput.value = '';
   };
 
   const uploadImage = async (file: File, campaignId: string): Promise<string | null> => {
@@ -139,6 +141,9 @@ const CampaignGrid = () => {
         showMaterialExplicativo: campaign.show_material_explicativo || true,
         status: campaign.status === 'active' ? 'publicado' : 'rascunho'
       });
+      // Clear image preview when opening edit modal
+      setImageFile(null);
+      setImagePreview(null);
       setIsEditDialogOpen(true);
     }
   };
@@ -200,22 +205,36 @@ const CampaignGrid = () => {
     if (editingCampaign) {
       setSubmitting(true);
       
-      const result = await updateCampaign(editingCampaign.id, {
-        title: formData.nome,
-        description: formData.descricao,
-        status: formData.status === 'publicado' ? 'active' : 'paused',
-        show_pecas_graficas: formData.showPecasGraficas,
-        show_solicitacao_spot: formData.showSolicitacaoSpot,
-        show_material_explicativo: formData.showMaterialExplicativo,
-      });
+      try {
+        let updateData: any = {
+          title: formData.nome,
+          description: formData.descricao,
+          status: (formData.status === 'publicado' ? 'active' : 'paused') as 'active' | 'paused' | 'completed',
+          show_pecas_graficas: formData.showPecasGraficas,
+          show_solicitacao_spot: formData.showSolicitacaoSpot,
+          show_material_explicativo: formData.showMaterialExplicativo,
+        };
 
-      if (result) {
-        resetForm();
-        setIsEditDialogOpen(false);
-        setEditingCampaign(null);
+        // If there's a new image file, upload it and add to update data
+        if (imageFile) {
+          const imageUrl = await uploadImage(imageFile, editingCampaign.id);
+          if (imageUrl) {
+            updateData.cover_image = imageUrl;
+          }
+        }
+
+        const result = await updateCampaign(editingCampaign.id, updateData);
+
+        if (result) {
+          resetForm();
+          setIsEditDialogOpen(false);
+          setEditingCampaign(null);
+        }
+      } catch (error) {
+        console.error('Error updating campaign:', error);
+      } finally {
+        setSubmitting(false);
       }
-      
-      setSubmitting(false);
     }
   };
 
@@ -414,17 +433,58 @@ const CampaignGrid = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="edit-descricao">Descrição da Campanha *</Label>
-                  <Textarea
-                    id="edit-descricao"
-                    value={formData.descricao}
-                    onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                    placeholder="Digite a descrição da campanha"
-                    className="min-h-[100px]"
-                    required
-                  />
-                </div>
+                 <div className="space-y-2">
+                   <Label htmlFor="edit-descricao">Descrição da Campanha *</Label>
+                   <Textarea
+                     id="edit-descricao"
+                     value={formData.descricao}
+                     onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                     placeholder="Digite a descrição da campanha"
+                     className="min-h-[100px]"
+                     required
+                   />
+                 </div>
+
+                 <div className="space-y-2">
+                   <Label htmlFor="edit-cover-image">Imagem de Capa</Label>
+                   <div className="space-y-3">
+                     {imagePreview || (editingCampaign && editingCampaign.cover_image) ? (
+                       <div className="relative">
+                         <img 
+                           src={imagePreview || editingCampaign?.cover_image} 
+                           alt="Preview" 
+                           className="w-full h-48 object-cover rounded-lg border border-border"
+                         />
+                         <Button
+                           type="button"
+                           variant="destructive"
+                           size="sm"
+                           className="absolute top-2 right-2"
+                           onClick={removeImage}
+                         >
+                           <X className="h-4 w-4" />
+                         </Button>
+                       </div>
+                     ) : (
+                       <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                         <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                         <p className="text-sm text-muted-foreground mb-2">
+                           Clique para fazer upload da nova imagem de capa
+                         </p>
+                         <p className="text-xs text-muted-foreground">
+                           PNG, JPG até 5MB
+                         </p>
+                       </div>
+                     )}
+                     <Input
+                       id="edit-cover-image"
+                       type="file"
+                       accept="image/*"
+                       onChange={handleImageChange}
+                       className="cursor-pointer"
+                     />
+                   </div>
+                 </div>
 
                 <div className="space-y-4">
                   <Label>Funcionalidades Disponíveis</Label>
