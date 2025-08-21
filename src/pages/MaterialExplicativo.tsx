@@ -6,29 +6,28 @@ import { Textarea } from '@/components/ui/textarea';
 import { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import campaign1 from '@/assets/campaign-1.jpg';
-import campaign2 from '@/assets/campaign-2.jpg';
-import campaign3 from '@/assets/campaign-3.jpg';
 import { useMaterialExplicativo } from '@/hooks/useMaterialExplicativo';
 import { useCampaigns } from '@/hooks/useCampaigns';
 
 const MaterialExplicativo = () => {
   const { campanhaId } = useParams();
+  const { campaigns } = useCampaigns();
   const [content, setContent] = useState('');
   const [editContent, setEditContent] = useState('');
   const [isWriteDialogOpen, setIsWriteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  // Dados das campanhas para buscar a capa correta
-  const campaigns = {
-    1: { title: 'Campanha de Lançamento de Produto', coverImage: campaign1 },
-    2: { title: 'Email Marketing - Black Friday', coverImage: campaign2 },
-    3: { title: 'Redes Sociais - Engajamento', coverImage: campaign3 },
-    4: { title: 'Campanha de Retargeting', coverImage: campaign1 },
-    5: { title: 'Newsletter Mensal', coverImage: campaign2 },
-    6: { title: 'Webinar Educativo', coverImage: campaign3 },
-  };
+  // Buscar a campanha atual pelos dados reais do Supabase
+  const currentCampaign = campaigns.find(campaign => campaign.id === campanhaId);
 
-  const currentCampaign = campaigns[parseInt(campanhaId || '1') as keyof typeof campaigns] || campaigns[1];
+  // Fallback para caso não encontre a campanha
+  const campaignData = currentCampaign ? {
+    title: currentCampaign.title,
+    coverImage: currentCampaign.cover_image || campaign1
+  } : {
+    title: 'Campanha não encontrada',
+    coverImage: campaign1
+  };
 
   const materialContent = `
 # Guia da Campanha de Marketing
@@ -114,7 +113,7 @@ Esta campanha visa aumentar a visibilidade da marca e gerar mais leads qualifica
               Material Explicativo
             </h1>
             <p className="text-muted-foreground">
-              {currentCampaign.title} - Documentação completa da campanha
+              {campaignData.title} - Documentação completa da campanha
             </p>
           </div>
           
@@ -163,13 +162,13 @@ Esta campanha visa aumentar a visibilidade da marca e gerar mais leads qualifica
           {/* Capa da Campanha */}
           <div className="relative">
             <img 
-              src={currentCampaign.coverImage} 
-              alt={currentCampaign.title}
+              src={campaignData.coverImage} 
+              alt={campaignData.title}
               className="w-full h-48 object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute bottom-4 left-6">
-              <h2 className="text-2xl font-bold text-white mb-1">{currentCampaign.title}</h2>
+              <h2 className="text-2xl font-bold text-white mb-1">{campaignData.title}</h2>
               <p className="text-white/90">Material Explicativo Completo</p>
             </div>
           </div>
